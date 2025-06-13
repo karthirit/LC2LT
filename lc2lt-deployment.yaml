@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lc2lt-converter
+  namespace: infrastructure-qa-orion
+  labels:
+    app: lc2lt-converter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lc2lt-converter
+  template:
+    metadata:
+      labels:
+        app: lc2lt-converter
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: qa-cloudtrust-infrastructure
+        vault.hashicorp.com/auth-config-type: iam
+    spec:
+      serviceAccountName: orion-modify
+      containers:
+      - name: lc2lt
+        image: infacloud-ct-docker-dev.jfrog.io/orion/lc2lt:latest  # Update this with your image repository
+        imagePullPolicy: Always
+        env:
+        - name: AWS_PROFILE
+          value: "qa"
+        - name: AWS_REGION
+          value: "us-west-2"
+        volumeMounts:
+        - name: aws-config
+          mountPath: /root/.aws
+          readOnly: true
+      volumes:
+      - name: aws-config
+        configMap:
+          name: aws-config
+      imagePullSecrets:
+      - name: jfrog-creds 
